@@ -11,14 +11,19 @@
     When submitted, it will be passed to the corresponding constructor parameter.
   -->
   <f:entry title="API Base URL" field="baseUrl">
-    <f:textbox default="http://mybitbucketserver.com"/>
+    <f:textbox default="${instance.getGlobalBaseUrl}"/>
   </f:entry>
   
-  <f:entry title="Success Notification">
-      <f:checkbox name="notifySuccess" value="true" checked="${instance.getNotifySuccess()}" />
+  <f:entry title="Success Build Status Update">
+      <f:checkbox name="updateSuccess" value="true" checked="${instance.getUpdateSuccess()}" />
   </f:entry>
-  
-  <f:entry title="Bitbucket Credentials" field="bitbucketCredentialsId">
-      <c:select />
+  <f:entry title="Failure Build Status Update">
+      <f:checkbox name="updateFailure" value="true" checked="${instance.getUpdateFailure()}" />
+  </f:entry>
+  <f:entry title="Bitbucket Username" field="bitbucketUsername">
+      <f:textbox />
+  </f:entry>
+  <f:entry title="Bitbucket Password" field="bitbucketPassword">
+      <c:select value="${instance.getBitbucketPassword()}" />
   </f:entry>
 </j:jelly>

@@ -1,0 +1,3 @@
+# Bitbucket Server Notification Plugin (for Jenkins CI)
+
+## Placeholder repo for now while work is being done... 
