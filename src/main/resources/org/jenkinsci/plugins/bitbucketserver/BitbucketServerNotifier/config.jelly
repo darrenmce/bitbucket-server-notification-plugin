@@ -1,0 +1,24 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+  <!--
+    This jelly script is used for per-project configuration.
+
+    See global.jelly for a general discussion about jelly script.
+  -->
+
+  <!--
+    Creates a text field that shows the value of the "name" property.
+    When submitted, it will be passed to the corresponding constructor parameter.
+  -->
+  <f:entry title="API Base URL" field="baseUrl">
+    <f:textbox default="http://mybitbucketserver.com"/>
+  </f:entry>
+  
+  <f:entry title="Success Notification">
+      <f:checkbox name="notifySuccess" value="true" checked="${instance.getNotifySuccess()}" />
+  </f:entry>
+  
+  <f:entry title="Bitbucket Credentials" field="bitbucketCredentialsId">
+      <c:select />
+  </f:entry>
+</j:jelly>
