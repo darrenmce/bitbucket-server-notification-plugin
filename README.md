@@ -9,3 +9,7 @@
 *NOTE: The password should be set using the `Secret Text` credential option*
 
 ![job config](/img/job.png)
+
+### Credit:
+
+ - used https://wiki.jenkins-ci.org/display/JENKINS/Bitbucket+Approve+Plugin as a helping reference, and in the future intend on PRing the functionality of this plugin into it.
