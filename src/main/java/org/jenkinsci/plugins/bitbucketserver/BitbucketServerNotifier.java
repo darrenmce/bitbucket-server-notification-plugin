@@ -106,15 +106,15 @@ public class BitbucketServerNotifier extends Notifier {
         BuildData buildData = build.getAction(BuildData.class);
 
         // data for the payload
-        String state = success ? "SUCCESSFUL": "FAILED";
+        String state = success ? "SUCCESSFUL" : "FAILED";
         String key = build.getProject().getDisplayName();
         String name = "Build #" + build.getId();
         String buildUrl = Jenkins.getInstance().getRootUrl() + build.getUrl();
         String commitHash = buildData.getLastBuiltRevision().getSha1String();
 
         StringCredentials creds = CredentialsMatchers.firstOrNull(
-            CredentialsProvider.lookupCredentials(StringCredentials.class, Jenkins.getInstance(), ACL.SYSTEM),
-            CredentialsMatchers.withId(bitbucketPassword)
+                CredentialsProvider.lookupCredentials(StringCredentials.class, Jenkins.getInstance(), ACL.SYSTEM),
+                CredentialsMatchers.withId(bitbucketPassword)
         );
 
         PrintStream logger = listener.getLogger();
@@ -160,17 +160,17 @@ public class BitbucketServerNotifier extends Notifier {
 
     private String buildStatusBody(String state, String key, String name, String url, String desc) {
         return "{"
-                + "\"state\": \""+ state +"\","
-                + "\"key\": \""+ key +"\","
-                + "\"name\": \""+ name +"\","
-                + "\"url\": \""+ url +"\","
-                + "\"description\": \""+ desc +"\""
+                + "\"state\": \"" + state + "\","
+                + "\"key\": \"" + key + "\","
+                + "\"name\": \"" + name + "\","
+                + "\"url\": \"" + url + "\","
+                + "\"description\": \"" + desc + "\""
                 + "}";
     }
 
     @Override
     public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     @Override
@@ -210,15 +210,17 @@ public class BitbucketServerNotifier extends Notifier {
 
         public FormValidation doCheckBitbucketUsername(@QueryParameter String value)
                 throws IOException, ServletException {
-            if (value.length() == 0)
+            if (value.length() == 0) {
                 return FormValidation.error("Please set the bitbucket username");
+            }
             return FormValidation.ok();
         }
 
         public FormValidation doCheckBitbucketPassword(@QueryParameter String value)
-            throws IOException, ServletException {
-            if (value.length() == 0)
+                throws IOException, ServletException {
+            if (value.length() == 0) {
                 return FormValidation.error("Please set the bitbucket password (Secret Text)");
+            }
             return FormValidation.ok();
         }
 
@@ -251,4 +253,3 @@ public class BitbucketServerNotifier extends Notifier {
 
     }
 }
-
