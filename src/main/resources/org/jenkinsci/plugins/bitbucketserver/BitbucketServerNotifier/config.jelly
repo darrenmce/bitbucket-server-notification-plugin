@@ -15,4 +15,7 @@
   <f:entry title="Bitbucket Password" field="bitbucketPassword">
       <c:select value="${instance.getBitbucketPassword()}" />
   </f:entry>
+  <f:entry title="Job description (optional, will show up in bitbucket)" field="jobDescription">
+      <f:textbox />
+  </f:entry>
 </j:jelly>

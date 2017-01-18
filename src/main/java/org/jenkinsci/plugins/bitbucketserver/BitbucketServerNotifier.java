@@ -48,6 +48,7 @@ public class BitbucketServerNotifier extends Notifier {
     private final boolean updateFailure;
     private final String bitbucketUsername;
     private final String bitbucketPassword;
+    private final String jobDescription;
 
     public String getBaseUrl() {
         return baseUrl;
@@ -69,13 +70,18 @@ public class BitbucketServerNotifier extends Notifier {
         return bitbucketPassword;
     }
 
+    public String getJobDescription() {
+        return jobDescription;
+    }
+
     public String getGlobalBaseUrl() {
         return getDescriptor().getGlobalBaseUrl();
     }
 
     @DataBoundConstructor
     public BitbucketServerNotifier(final String baseUrl, final boolean updateSuccess,
-            final boolean updateFailure, final String bitbucketUsername, final String bitbucketPassword) {
+            final boolean updateFailure, final String bitbucketUsername,
+            final String bitbucketPassword, final String jobDescription) {
         String cleanedBaseUrl = baseUrl.trim();
         if (cleanedBaseUrl.endsWith("/")) {
             cleanedBaseUrl = cleanedBaseUrl.substring(0, cleanedBaseUrl.length() - 1);
@@ -85,6 +91,7 @@ public class BitbucketServerNotifier extends Notifier {
         this.updateFailure = updateFailure;
         this.bitbucketUsername = bitbucketUsername;
         this.bitbucketPassword = bitbucketPassword;
+        this.jobDescription = jobDescription;
 
         httpClient = new OkHttpClient().newBuilder()
                 .connectTimeout(30, TimeUnit.SECONDS)
@@ -114,7 +121,7 @@ public class BitbucketServerNotifier extends Notifier {
         if ((success && updateSuccess) || (failure && updateFailure)) {
             String authHeader = Credentials.basic(bitbucketUsername, creds.getSecret().getPlainText());
             String url = createBuildStatusUrl(baseUrl.length() == 0 ? getGlobalBaseUrl() : baseUrl, commitHash);
-            String statusUpdateBody = buildStatusBody(state, key, name, buildUrl, "test description");
+            String statusUpdateBody = buildStatusBody(state, key, name, buildUrl, jobDescription);
             logger.println("Bitbucket Server Notifier POSTING to " + url);
             logger.println("BODY " + statusUpdateBody);
             return bitbucketApiCall(logger, url, statusUpdateBody, authHeader);
