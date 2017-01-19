@@ -9,11 +9,8 @@
   <f:entry title="Failure Build Status Update">
       <f:checkbox name="updateFailure" value="true" checked="${instance.getUpdateFailure()}" />
   </f:entry>
-  <f:entry title="Bitbucket Username" field="bitbucketUsername">
-      <f:textbox />
-  </f:entry>
-  <f:entry title="Bitbucket Password" field="bitbucketPassword">
-      <c:select value="${instance.getBitbucketPassword()}" />
+  <f:entry title="Bitbucket Login" field="credentialsId">
+      <c:select value="${instance.getCredentialsId()}" />
   </f:entry>
   <f:entry title="Job description (optional, will show up in bitbucket)" field="jobDescription">
       <f:textbox />

@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.bitbucketserver;
 
-import org.jenkinsci.plugins.plaincredentials.StringCredentials;
-import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 
@@ -37,18 +36,24 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.io.PrintStream;
 
-import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
+import hudson.model.Item;
+import hudson.model.Job;
+import java.util.List;
+import org.kohsuke.stapler.AncestorInPath;
 
 public class BitbucketServerNotifier extends Notifier {
 
     private final OkHttpClient httpClient;
 
-    private final String baseUrl;
-    private final boolean updateSuccess;
-    private final boolean updateFailure;
-    private final String bitbucketUsername;
-    private final String bitbucketPassword;
-    private final String jobDescription;
+    private String baseUrl;
+    private boolean updateSuccess;
+    private boolean updateFailure;
+    private String credentialsId;
+    private String jobDescription;
 
     public String getBaseUrl() {
         return baseUrl;
@@ -62,12 +67,8 @@ public class BitbucketServerNotifier extends Notifier {
         return updateFailure;
     }
 
-    public String getBitbucketUsername() {
-        return bitbucketUsername;
-    }
-
-    public String getBitbucketPassword() {
-        return bitbucketPassword;
+    public String getCredentialsId() {
+        return credentialsId;
     }
 
     public String getJobDescription() {
@@ -80,8 +81,8 @@ public class BitbucketServerNotifier extends Notifier {
 
     @DataBoundConstructor
     public BitbucketServerNotifier(final String baseUrl, final boolean updateSuccess,
-            final boolean updateFailure, final String bitbucketUsername,
-            final String bitbucketPassword, final String jobDescription) {
+            final boolean updateFailure, final String credentialsId,
+            final String jobDescription) {
         String cleanedBaseUrl = baseUrl.trim();
         if (cleanedBaseUrl.endsWith("/")) {
             cleanedBaseUrl = cleanedBaseUrl.substring(0, cleanedBaseUrl.length() - 1);
@@ -89,8 +90,7 @@ public class BitbucketServerNotifier extends Notifier {
         this.baseUrl = cleanedBaseUrl;
         this.updateSuccess = updateSuccess;
         this.updateFailure = updateFailure;
-        this.bitbucketUsername = bitbucketUsername;
-        this.bitbucketPassword = bitbucketPassword;
+        this.credentialsId = credentialsId;
         this.jobDescription = jobDescription;
 
         httpClient = new OkHttpClient().newBuilder()
@@ -112,14 +112,17 @@ public class BitbucketServerNotifier extends Notifier {
         String buildUrl = Jenkins.getInstance().getRootUrl() + build.getUrl();
         String commitHash = buildData.getLastBuiltRevision().getSha1String();
 
-        StringCredentials creds = CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(StringCredentials.class, Jenkins.getInstance(), ACL.SYSTEM),
-                CredentialsMatchers.withId(bitbucketPassword)
+        List<DomainRequirement> uriRequirements = URIRequirementBuilder.fromUri(baseUrl).build();
+
+        UsernamePasswordCredentials creds = CredentialsMatchers.firstOrNull(
+                CredentialsProvider.lookupCredentials(UsernamePasswordCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, uriRequirements),
+                CredentialsMatchers.withId(credentialsId)
         );
 
         PrintStream logger = listener.getLogger();
+
         if ((success && updateSuccess) || (failure && updateFailure)) {
-            String authHeader = Credentials.basic(bitbucketUsername, creds.getSecret().getPlainText());
+            String authHeader = Credentials.basic(creds.getUsername(), creds.getPassword().getPlainText());
             String url = createBuildStatusUrl(baseUrl.length() == 0 ? getGlobalBaseUrl() : baseUrl, commitHash);
             String statusUpdateBody = buildStatusBody(state, key, name, buildUrl, jobDescription);
             logger.println("Bitbucket Server Notifier POSTING to " + url);
@@ -183,17 +186,15 @@ public class BitbucketServerNotifier extends Notifier {
 
         private String globalBaseUrl = "";
 
-        public ListBoxModel doFillBitbucketPasswordItems() {
-            if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Job<?, ?> owner, @QueryParameter String baseUrl) {
+            if (owner == null || !owner.hasPermission(Item.CONFIGURE)) {
                 return new ListBoxModel();
             }
-            return new StandardListBoxModel()
+            List<DomainRequirement> uriRequirements = URIRequirementBuilder.fromUri(baseUrl).build();
+
+            return new StandardUsernameListBoxModel()
                     .withEmptySelection()
-                    .withAll(lookupCredentials(
-                            StringCredentials.class,
-                            Jenkins.getInstance(),
-                            ACL.SYSTEM)
-                    );
+                    .withAll(CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class, owner, null, uriRequirements));
         }
 
         public FormValidation doCheckBaseUrl(@QueryParameter String value)
@@ -208,18 +209,10 @@ public class BitbucketServerNotifier extends Notifier {
             return FormValidation.ok();
         }
 
-        public FormValidation doCheckBitbucketUsername(@QueryParameter String value)
+        public FormValidation doCheckCredentialsId(@QueryParameter String value)
                 throws IOException, ServletException {
             if (value.length() == 0) {
-                return FormValidation.error("Please set the bitbucket username");
-            }
-            return FormValidation.ok();
-        }
-
-        public FormValidation doCheckBitbucketPassword(@QueryParameter String value)
-                throws IOException, ServletException {
-            if (value.length() == 0) {
-                return FormValidation.error("Please set the bitbucket password (Secret Text)");
+                return FormValidation.error("Please set the bitbucket login credentials");
             }
             return FormValidation.ok();
         }
